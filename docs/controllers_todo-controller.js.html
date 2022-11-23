@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers/todo-controller.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers/todo-controller.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module controller/todo
+ */
+const TodoService = require("../services/todo-service");
+
+/**
+ * TodoController
+ * @type {object}
+ * @constructor
+ * @namespace TodoController
+ */
+class TodoController {
+  /**
+   * Todo controller serving new todo, take in body of request title and text.
+   * @name addTodo
+   * @memberof module:controller/todo
+   * @function
+   * @async
+   * @param {Object} req request
+   * @param {Object} res response
+   * @param {Object} next next
+   * @return {Promise&lt;{title: string, text: string, isComplete: boolean, userID: string}>} return new todo
+   */
+  async addTodo(req, res, next) {
+    try {
+      const { title, text } = req.body;
+      const userID = req.user.id;
+      const todo = await TodoService.addTodo(title, text, userID);
+      return res.json(todo);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Todo controller that delete todo.
+   * @name deleteTodo
+   * @memberof module:controller/todo
+   * @function
+   * @async
+   * @param {Object} req request
+   * @param {Object} res response
+   * @param {Object} next next
+   * @return {Promise&lt;"">} return empty response
+   */
+  async deleteTodo(req, res, next) {
+    try {
+      const todoID = req.params.id;
+      const userID = req.user.id;
+      await TodoService.deleteTodo(todoID, userID);
+      res.status(204);
+      return res.json();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Todo controller serving all todos.
+   * @name getAllTodo
+   * @memberof module:controller/todo
+   * @function
+   * @async
+   * @param {Object} req request
+   * @param {Object} res response
+   * @param {Object} next next
+   * @return {Promise&lt;{todo: Array({title: string, text: string, isComplete: boolean, userID: string}), totalPage: number, currentPage: number}>} return edited.
+   */
+  async getAllTodo(req, res, next) {
+    try {
+      const { page = 1, limit = 0, ...filter } = req.query;
+      const userID = req.user.id;
+      const todo = await TodoService.getAllTodo(userID, page, limit, filter);
+      return res.json({
+        todo: todo.todo,
+        totalPage: Math.ceil(todo.count / limit),
+        currentPage: page,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Todo controller that gets one todo.
+   * @name getTodo
+   * @memberof module:controller/todo
+   * @function
+   * @async
+   * @param {Object} req request
+   * @param {Object} res response
+   * @param {Object} next next
+   * @return {Promise&lt;{title: string, text: string, isComplete: boolean, userID: string}>} return one todo.
+   */
+  async getTodo(req, res, next) {
+    try {
+      const userID = req.user.id;
+      const todoID = req.params.id;
+
+      const todo = await TodoService.getTodo(todoID, userID);
+      return res.json(todo);
+    } catch (error) {
+      next(error);
+    }
+  }
+  /**
+   * Todo controller that edits a todo, take in body of request: text, title, isComplete.
+   * @name editTodo
+   * @memberof module:controller/todo
+   * @function
+   * @async
+   * @param {Object} req request
+   * @param {Object} res response
+   * @param {Object} next next
+   * @return {Promise&lt;{title: string, text: string, isComplete: boolean, userID: string}>} return array of todos.
+   */
+  async editTodo(req, res, next) {
+    try {
+      const userID = req.user.id;
+      const todoID = req.params.id;
+      const title = req.body.title;
+      const text = req.body.text;
+      const isComplete = req.body.isComplete;
+
+      const todo = await TodoService.editTodo(
+        todoID,
+        userID,
+        title,
+        text,
+        isComplete
+      );
+      return res.json(todo);
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = new TodoController();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controller_todo.html">controller/todo</a></li><li><a href="module-controller_upload.html">controller/upload</a></li><li><a href="module-controller_user.html">controller/user</a></li><li><a href="module-dto_user.html">dto/user</a></li><li><a href="module-exceptions_api-error.html">exceptions/api-error</a></li><li><a href="module-middlewares_auth-middleware.html">middlewares/auth-middleware</a></li><li><a href="module-middlewares_error-middleware.html">middlewares/error-middleware</a></li><li><a href="module-middlewares_upload-middleware.html">middlewares/upload-middleware</a></li><li><a href="module-models_file.html">models/file</a></li><li><a href="module-models_todo.html">models/todo</a></li><li><a href="module-models_token.html">models/token</a></li><li><a href="module-models_user.html">models/user</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_todos.html">routes/todos</a></li><li><a href="module-routes_uploads.html">routes/uploads</a></li><li><a href="module-services_file.html">services/file</a></li><li><a href="module-services_todo.html">services/todo</a></li><li><a href="module-services_token.html">services/token</a></li><li><a href="module-services_user.html">services/user</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-controller_todo-TodoController.html">TodoController</a></li><li><a href="module-controller_upload-FileController.html">FileController</a></li><li><a href="module-controller_user-UserController.html">UserController</a></li><li><a href="module-routes_auth-authRouter.html">authRouter</a></li><li><a href="module-routes_todos-todosRouter.html">todosRouter</a></li><li><a href="module-routes_uploads-uploadsRouter.html">uploadsRouter</a></li><li><a href="module-services_file-FileService.html">FileService</a></li><li><a href="module-services_todo-TodoService.html">TodoService</a></li><li><a href="module-services_token-TokenService.html">TokenService</a></li><li><a href="module-services_user-UserService.html">UserService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Wed Nov 23 2022 20:10:40 GMT+0300 (Москва, стандартное время)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/user-service.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/user-service.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @module services/user
+ * @requires bcrypt
+ * @requires uuid
+ */
+const UserModel = require("../models/user-model");
+const bcrypt = require("bcrypt");
+const uuid = require("uuid");
+const TokenService = require("./token-service");
+const UserDto = require("../dtos/user-dto");
+const ApiError = require("../exceptions/api-error");
+
+/**
+ * UserService
+ * @type {object}
+ * @constructor
+ * @namespace UserService
+ */
+class UserService {
+  /**
+   * User service that add new user.
+   * @name registration
+   * @memberof module:services/user
+   * @function
+   * @async
+   * @param {string} email request
+   * @param {string} password response
+   * @return {Promise&lt;{user: {email: string, id: string}, accessToken: string, refreshToken: string}>} return user data and pair of token
+   */
+  async registration(email, password) {
+    const candidate = await UserModel.findOne({ email });
+    if (candidate != null) {
+      throw ApiError.BadRequest(
+        `Пользователь с почтовым адрессом ${email} уже существует.`
+      );
+    }
+    const hashPassword = await bcrypt.hash(password, 3);
+    const activationLink = uuid.v4();
+
+    const user = await UserModel.create({
+      email,
+      password: hashPassword,
+      activationLink,
+    });
+    const userDto = new UserDto(user);
+    const tokens = TokenService.generateToken({ ...userDto });
+    await TokenService.saveToken(userDto.id, tokens.refreshToken);
+
+    return {
+      ...tokens,
+      user: userDto,
+    };
+  }
+
+  /**
+   * User service that login user in service, take in body of request email(string) and password(string).
+   * @name login
+   * @memberof module:services/user
+   * @function
+   * @async
+   * @param {string} email request
+   * @param {string} password response
+   * @return {Promise&lt;{user: {email: string, id: string}, accessToken: string, refreshToken: string}>} return user data and pair of token
+   */
+  async login(email, password) {
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      throw ApiError.BadRequest(`Пользователь с email ${email} не существует.`);
+    }
+    const isPasswordEquals = await bcrypt.compare(password, user.password);
+    if (!isPasswordEquals) {
+      throw ApiError.BadRequest("Неверный пароль");
+    }
+    const userDto = new UserDto(user);
+    const tokens = TokenService.generateToken({ ...userDto });
+    await TokenService.saveToken(userDto.id, tokens.refreshToken);
+    return {
+      ...tokens,
+      user: userDto,
+    };
+  }
+
+  /**
+   * User service that loggout from service.
+   * @name logout
+   * @memberof module:services/user
+   * @function
+   * @async
+   * @param {string} refreshToken from cookies
+   * @return {Promise} delete refreshToken from cookies
+   */
+  async logout(refreshToken) {
+    const token = await TokenService.removeToken(refreshToken);
+    return token;
+  }
+
+  /**
+   * User service that loggout from service.
+   * @name refresh
+   * @memberof module:services/user
+   * @function
+   * @async
+   * @param {string} refreshToken from cookies
+   * @return {Promise&lt;{user: {email: string, id: string}, accessToken: string, refreshToken: string}>} return user data and pair of token
+   */
+  async refresh(refreshToken) {
+    if (!refreshToken) {
+      throw ApiError.UnathorizedError();
+    }
+    const userData = TokenService.validateRefreshToken(refreshToken);
+    const tokenFromDb = await TokenService.findToken(refreshToken);
+    if (!userData &amp;&amp; !tokenFromDb) {
+      throw ApiError.UnathorizedError();
+    }
+    const user = await UserModel.findById(userData.id);
+    const userDto = new UserDto(user);
+    const tokens = TokenService.generateToken({ ...userDto });
+    await TokenService.saveToken(userDto.id, tokens.refreshToken);
+
+    return {
+      ...tokens,
+      user: userDto,
+    };
+  }
+}
+
+module.exports = new UserService();
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-controller_todo.html">controller/todo</a></li><li><a href="module-controller_upload.html">controller/upload</a></li><li><a href="module-controller_user.html">controller/user</a></li><li><a href="module-dto_user.html">dto/user</a></li><li><a href="module-exceptions_api-error.html">exceptions/api-error</a></li><li><a href="module-middlewares_auth-middleware.html">middlewares/auth-middleware</a></li><li><a href="module-middlewares_error-middleware.html">middlewares/error-middleware</a></li><li><a href="module-middlewares_upload-middleware.html">middlewares/upload-middleware</a></li><li><a href="module-models_file.html">models/file</a></li><li><a href="module-models_todo.html">models/todo</a></li><li><a href="module-models_token.html">models/token</a></li><li><a href="module-models_user.html">models/user</a></li><li><a href="module-routes_auth.html">routes/auth</a></li><li><a href="module-routes_todos.html">routes/todos</a></li><li><a href="module-routes_uploads.html">routes/uploads</a></li><li><a href="module-services_file.html">services/file</a></li><li><a href="module-services_todo.html">services/todo</a></li><li><a href="module-services_token.html">services/token</a></li><li><a href="module-services_user.html">services/user</a></li></ul><h3>Namespaces</h3><ul><li><a href="module-controller_todo-TodoController.html">TodoController</a></li><li><a href="module-controller_upload-FileController.html">FileController</a></li><li><a href="module-controller_user-UserController.html">UserController</a></li><li><a href="module-routes_auth-authRouter.html">authRouter</a></li><li><a href="module-routes_todos-todosRouter.html">todosRouter</a></li><li><a href="module-routes_uploads-uploadsRouter.html">uploadsRouter</a></li><li><a href="module-services_file-FileService.html">FileService</a></li><li><a href="module-services_todo-TodoService.html">TodoService</a></li><li><a href="module-services_token-TokenService.html">TokenService</a></li><li><a href="module-services_user-UserService.html">UserService</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Wed Nov 23 2022 20:10:40 GMT+0300 (Москва, стандартное время)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

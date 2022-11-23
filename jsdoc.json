@@ -1,0 +1,25 @@
+{
+  "source": {
+    "include": [
+      "index.js",
+      "controllers",
+      "dtos",
+      "exceptions",
+      "middlewares",
+      "models",
+      "routers",
+      "services"
+    ],
+    "includePattern": ".js?$",
+    "excludePattern": "(node_modules/|docs)"
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true
+  },
+  "opts": {
+    "recurse": true,
+    "destination": "./docs/"
+  }
+}
